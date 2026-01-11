@@ -9,21 +9,39 @@
 	"compatibility_date": "2025-06-17",
 	"compatibility_flags": ["nodejs_compat"],
 	"observability": {
-		"enabled": true,
+		"enabled": true
 	},
 	"d1_databases": [
 		{
-		  "binding": "DB",
-		  "database_name": "smart-links-stage",
-		  "database_id": "45cb0117-7cdd-4c62-bec0-6f3324567253",
-		  "remote": true
+			"binding": "DB",
+			"database_name": "smart-links-stage",
+			"database_id": "45cb0117-7cdd-4c62-bec0-6f3324567253",
+			"remote": true
 		}
-	  ],
-	  "kv_namespaces": [
+	],
+	"kv_namespaces": [
 		{
 			"binding": "CACHE",
 			"id": "e2c74c5f0eea4215b05b54a894c23386",
 			"remote": true
 		}
-	  ]
+	],
+	"queues": {
+		"consumers": [
+			{
+				"queue": "smart-links-data-queue-stage",
+				"dead_letter_queue": "smart-links-data-queue-stage-dead-letter"
+			},
+			{
+				"queue": "smart-links-data-queue-stage-dead-letter",
+				"retry_delay": 0
+			}
+		],
+		"producers": [
+			{
+				"binding": "QUEUE",
+				"queue": "smart-links-data-queue-stage"
+			}
+		]
+	}
 }

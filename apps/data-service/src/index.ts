@@ -4,6 +4,8 @@ import { initDatabase } from '@repo/data-ops/database';
 import { QueueMessageSchema } from '@repo/data-ops/zod-schema/queue';
 import { handleLinkClick } from './queue-handlers/link-clicks';
 export {DestinationEvaluationWorkflow} from './workflows/destination-evalutation-workflow';
+export { EvaluationScheduler} from "@/durable-objects/evaluation-scheduler";
+
 export default class DataService extends WorkerEntrypoint<Env> {
 	constructor(ctx: ExecutionContext, env: Env) {
 		super(ctx, env)
@@ -22,7 +24,7 @@ export default class DataService extends WorkerEntrypoint<Env> {
 			const event = parsedEvent.data;
 			switch (event.type) {
 				case 'LINK_CLICK':
-					await handleLinkClick(this.env, event.data);
+					await handleLinkClick(this.env, event);
 					// throw new Error('Not implemented');
 					break;
 				default:

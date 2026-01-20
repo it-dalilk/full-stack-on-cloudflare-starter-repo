@@ -4,4 +4,7 @@ interface DestinationStatusEvaluationParams {
 	accountId: string;
 }
 
-interface Env extends Cloudflare.Env {}
+interface Env extends Cloudflare.Env {
+	DESTINATION_EVALUATION_WORKFLOW: Workflow<DestinationStatusEvaluationParams>;
+}
+

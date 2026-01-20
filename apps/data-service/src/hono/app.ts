@@ -3,7 +3,7 @@ import { getLink } from '@repo/data-ops/queries/links';
 import { cloudflareInfoSchema } from '@repo/data-ops/zod-schema/links';
 import { Hono } from 'hono';
 import { LinkClickMessageType } from '@repo/data-ops/zod-schema/queue';
-
+import { EvaluationScheduler } from '@/index';
 
 export const App = new Hono<{ Bindings: Env }>();
 

@@ -1,17 +1,37 @@
-import { getDestinationForCountry, getRoutingDestinations } from '@/helpers/route-ops';
-import { getLink } from '@repo/data-ops/queries/links';
+import { captureLinkClickInBackground, getDestinationForCountry, getRoutingDestinations } from '@/helpers/route-ops';
 import { cloudflareInfoSchema } from '@repo/data-ops/zod-schema/links';
-import { Hono } from 'hono';
 import { LinkClickMessageType } from '@repo/data-ops/zod-schema/queue';
-import { EvaluationScheduler } from '@/index';
+
+import { Hono } from 'hono';
+import { cors } from 'hono/cors';
+
 
 export const App = new Hono<{ Bindings: Env }>();
+
+App.use('*', cors());
+
+App.get('/click-socket', async (c) => {
+  const upgradeHeader = c.req.header('Upgrade');
+	if (!upgradeHeader || upgradeHeader !== 'websocket') {
+		return c.text('Expected Upgrade: websocket', 426);
+	}
+
+  const accountId = c.req.header('account-id');
+  if (!accountId) return  c.text('No Headers', 404);
+  const doId = c.env.LINK_CLICK_TRACKER_OBJECT.idFromName(accountId);
+	const stub = c.env.LINK_CLICK_TRACKER_OBJECT.get(doId);
+  return await stub.fetch(c.req.raw)
+})
+
 
 
 App.get('/:id', async (c) => {
     const id = c.req.param('id');
 
-    const linkInfo = await getRoutingDestinations(c.env, id);
+    const linkInfo = await getRoutingDestinations(c.env, id)
+    if (!linkInfo) {
+		return c.text('Destination not found', 404);
+	}
 
     const cfHeader = cloudflareInfoSchema.safeParse(c.req.raw.cf)
     if (!cfHeader.success) {
@@ -20,21 +40,21 @@ App.get('/:id', async (c) => {
 
     const headers = cfHeader.data
     const destination = getDestinationForCountry(linkInfo, headers.country)
-    if (!destination) {
-        return c.text('Destination not found', 404);
-    }
+
     const queueMessage: LinkClickMessageType = {
-      type: 'LINK_CLICK',
+      type: "LINK_CLICK",
       data: {
-        id,
+        id: id,
         country: headers.country,
-        destination,
-        accountId: linkInfo?.accountId || '',
+        destination: destination || "",
+        accountId: linkInfo.accountId,
         latitude: headers.latitude,
         longitude: headers.longitude,
-        timestamp: new Date().toISOString(),
-      },
+        timestamp: new Date().toISOString()
+      }
     }
-    c.executionCtx.waitUntil(c.env.QUEUE.send(queueMessage));
-    return c.redirect(destination)
+    c.executionCtx.waitUntil(
+      captureLinkClickInBackground(c.env, queueMessage)
+    )
+    return c.redirect(destination || "")
 })

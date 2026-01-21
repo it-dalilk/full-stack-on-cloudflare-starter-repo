@@ -21,5 +21,12 @@
       "database_id": "45cb0117-7cdd-4c62-bec0-6f3324567253",
       "remote": true
     }
+  ],
+  "services": [
+    {
+     "binding": "BACKEND_SERVICE",
+     "service": "data-service",
+     "remote": true
+    }
   ]
 }
